@@ -191,3 +191,35 @@ export const updatePost = async(req, res, next) =>{
         data: blog
     })
 }
+
+
+
+export const getPostbyName = async (req, res) => {
+  const { name } = req.query;  // Get the author's name from the query parameters
+  console.log(name);
+  
+  try {
+    const blogs = await blogModel.find()
+      .populate({
+        path: 'user',  // Populating the author field
+        match: {
+          fullName: { $regex: name, $options: 'i' } 
+        },
+        select: 'name email' 
+      });
+
+    // Filter out blogs where the author does not match the search criteria
+    const filteredBlogs = blogs.filter(blog => blog.user);
+
+    if (filteredBlogs.length === 0) {
+      return res.status(404).json({ message: 'No blogs found for this author' });
+    }
+
+    res.status(200).json(filteredBlogs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
